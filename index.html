@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo de Negociación VPP</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Calibri,Arial,sans-serif;background:#F4F7FB;color:#1A2B4A;padding:24px 16px}
+  h1{font-size:20px;font-weight:700;color:#1A2B4A;margin-bottom:4px}
+  .subtitle{font-size:13px;color:#6B7A8D;margin-bottom:20px}
+
+  .profiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .profile-card{background:#fff;border-radius:10px;border:1px solid #E8EEF5;padding:14px 12px}
+  .profile-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .profile-num{font-size:11px;font-weight:700;background:#1A2B4A;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .profile-name{font-size:13px;font-weight:700;color:#1A2B4A;line-height:1.3}
+  .profile-desc{font-size:11.5px;color:#6B7A8D;line-height:1.5;margin-bottom:8px}
+  .prism-row{display:flex;gap:5px;align-items:center;font-size:10.5px;color:#6B7A8D}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+  .table-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+  table{border-collapse:collapse;width:100%;min-width:900px;background:#fff}
+  th,td{border:1px solid #E8EEF5;padding:0;vertical-align:top;font-size:12px}
+
+  .th-tipo{background:#1A2B4A;color:#CADCFC;font-size:11px;font-weight:600;letter-spacing:.05em;padding:10px 12px;text-align:left;width:130px}
+  .th-stage{background:#F4F7FB;padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:#1A2B4A;line-height:1.3}
+  .th-stage small{display:block;font-size:10px;font-weight:400;color:#6B7A8D;margin-top:2px;line-height:1.3}
+  .stage-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;margin-bottom:3px}
+
+  .td-tipo{background:#F4F7FB;padding:10px 10px;width:130px}
+  .td-tipo-name{font-size:12px;font-weight:700;color:#1A2B4A;margin-bottom:4px;line-height:1.35}
+  .td-tipo-sub{font-size:10.5px;color:#6B7A8D;line-height:1.4;margin-bottom:7px}
+
+  .cell{padding:7px 7px;vertical-align:top}
+  .pill{display:inline-block;font-size:10px;font-weight:700;border-radius:3px;padding:2px 7px;margin-bottom:5px;letter-spacing:.02em}
+  .pill-do{background:#EAF3DE;color:#27500A}
+  .pill-skip{background:#E8EEF5;color:#3A4456}
+  .pill-warn{background:#FAEEDA;color:#633806}
+  .pill-key{background:#1A2B4A;color:#C8A84B}
+  .pill-optional{background:#F4E8FB;color:#4A2070}
+  .pill-unlikely{background:#E8EEF5;color:#6B7A8D}
+
+  .action{font-size:11px;color:#3A4456;line-height:1.45}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:16px;font-size:11px;color:#6B7A8D;background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #E8EEF5}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-section{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #E8EEF5;width:100%}
+
+  tr:hover td{background:#FAFCFF}
+  tr:hover .td-tipo{background:#EDF1F8}
+
+  /* Tabs */
+  .tabs-bar{display:flex;gap:0;border-bottom:2px solid #E8EEF5;margin-bottom:0}
+  .tab-btn{padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:8px 8px 0 0;margin-right:4px;transition:background .15s,color .15s}
+  .tab-btn.active{background:#1A2B4A;color:#C8A84B}
+  .tab-btn.inactive{background:#F4F7FB;color:#6B7A8D}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  #panel-identificar{background:#fff;border-radius:0 10px 10px 10px;border:1px solid #E8EEF5;overflow-x:auto}
+</style>
+</head>
+<body>
+
+<h1>Modelo de Negociación VPP</h1>
+<p class="subtitle">Etapas de atención según sensibilidad al precio del cliente</p>
+
+<!-- PERFILES -->
+<div class="profiles">
+  <div class="profile-card">
+    <div class="profile-header">
+      <span class="profile-num">1</span>
+      <span class="profile-name">El Informado Exigente</span>
+    </div>
+    <div class="profile-desc">Viene con precios investigados y una cifra en mente. El precio es una posición, no una duda. Lo pone sobre la mesa desde el inicio.</div>
+    <div class="prism-row"><span class="dot" style="background:#E24B4A"></span> Rojo &nbsp;·&nbsp; <span class="dot" style="background:#378ADD"></span> Azul</div>
+  </div>
+  <div class="profile-card">
+    <div class="profile-header">
+      <span class="profile-num">2</span>
+      <span class="profile-name">El Ansioso Silencioso</span>
+    </div>
+    <div class="profile-desc">Tiene expectativas de precio pero no las comunica. Si la tasación no lo convence, se frena o se va sin explicar por qué.</div>
+    <div class="prism-row"><span class="dot" style="background:#1D9E75"></span> Verde &nbsp;·&nbsp; <span class="dot" style="background:#EF9F27"></span> Amarillo</div>
+  </div>
+  <div class="profile-card">
+    <div class="profile-header">
+      <span class="profile-num">3</span>
+      <span class="profile-name">El Pragmático Flexible</span>
+    </div>
+    <div class="profile-desc">Acepta que recibirá menos que en el mercado particular. Valora la conveniencia y simpleza. El precio importa, pero no es el eje de su decisión.</div>
+    <div class="prism-row"><span class="dot" style="background:#EF9F27"></span> Amarillo &nbsp;·&nbsp; <span class="dot" style="background:#1D9E75"></span> Verde</div>
+  </div>
+  <div class="profile-card">
+    <div class="profile-header">
+      <span class="profile-num">4</span>
+      <span class="profile-name">El Desapegado</span>
+    </div>
+    <div class="profile-desc">Sin expectativas claras sobre el valor de su auto. El VPP es un trámite, no una negociación. Acepta el precio si el proceso es simple.</div>
+    <div class="prism-row"><span class="dot" style="background:#1D9E75"></span> Verde &nbsp;·&nbsp; <span class="dot" style="background:#EF9F27"></span> Amarillo</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tab-negociacion" onclick="showTab('negociacion')">Modelo de negociación</button>
+  <button class="tab-btn inactive" id="tab-identificar" onclick="showTab('identificar')">Cómo identificar al cliente</button>
+</div>
+
+<!-- PANEL 1: MODELO DE NEGOCIACIÓN -->
+<div class="tab-panel active" id="panel-negociacion">
+  <div class="table-wrap">
+  <table>
+  <thead>
+  <tr>
+    <th class="th-tipo">Tipo de cliente</th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#E6F1FB;color:#185FA5">1</div>
+      Presentar VPP
+      <small>Beneficios y propuesta de valor</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#FAEEDA;color:#854F0B">2</div>
+      Levantar expectativas
+      <small>¿Qué espera recibir?</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#FAEEDA;color:#854F0B">3</div>
+      Portal de precios
+      <small>Revisión de mercado</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#EAF3DE;color:#3B6D11">4</div>
+      Tasación
+      <small>Sin dar precio aún</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#1A2B4A;color:#C8A84B">5</div>
+      Inspección
+      <small>Dar precio final sí o sí</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#FCEBEB;color:#A32D2D">6</div>
+      Apelación de precio
+      <small>Manejo de objeción</small>
+    </th>
+    <th class="th-stage">
+      <div class="stage-badge" style="background:#E1F5EE;color:#0F6E56">7</div>
+      Cierre
+      <small>Acuerdo y firma</small>
+    </th>
+  </tr>
+  </thead>
+  <tbody>
+
+  <!-- TIPO 1 -->
+  <tr>
+    <td class="td-tipo">
+      <div class="td-tipo-name">Tipo 1 — El Informado Exigente</div>
+      <div class="td-tipo-sub">Alta sensibilidad · Expectativa explícita</div>
+      <div class="prism-row" style="margin-top:4px"><span class="dot" style="background:#E24B4A"></span>&nbsp;<span class="dot" style="background:#378ADD"></span></div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Presentación sólida. Posicionar el valor del "Producto VPP" antes de que compare. Anticipar que ya investigó precios.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Dejar que exprese su cifra. Escuchar sin interrumpir. Identificar la brecha con nuestro precio de mercado en CRM.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Revisar el portal Chileautos junto a él. Contextualizar tiempo de venta, gastos de gestión y riesgos de vender solo.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-warn">Con cuidado</span>
+      <div class="action">Dar precio apelado para bajar ansiedad. Explicar el proceso de inspección. Hacerlo sentir que el precio será justo y transparente. Enfatizar en seguridad y comodidad.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-key">Momento clave</span>
+      <div class="action">Dar precio con fundamento técnico. Mostrar informe de la tasación. Ser directo y seguro — este perfil respeta la firmeza, sin ser confrontacional.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Aplicar el script de precio. Buscar opciones de apelación por medio de pago con financiamiento o modelo Hot Sale.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Confirmar el acuerdo con claridad. Resumir lo pactado. Agradecer con energía genuina.</div>
+    </td>
+  </tr>
+
+  <!-- TIPO 2 -->
+  <tr>
+    <td class="td-tipo">
+      <div class="td-tipo-name">Tipo 2 — El Ansioso Silencioso</div>
+      <div class="td-tipo-sub">Alta sensibilidad · Expectativa oculta</div>
+      <div class="prism-row" style="margin-top:4px"><span class="dot" style="background:#1D9E75"></span>&nbsp;<span class="dot" style="background:#EF9F27"></span></div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Énfasis en seguridad y confianza. Mostrar el proceso paso a paso. Reducir la incertidumbre desde el inicio.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Preguntas abiertas para despertar la expectativa. «¿Tienes algún valor en mente?» Si no responde, no forzar y continuar.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-warn">Evitar</span>
+      <div class="action">Si no comunicó expectativa, no mostrar el portal. Puede inflar su referencia y crear una brecha innecesaria. Si comunica expectativa y está dentro del rango, continuar con tasación, sin pasar por portal.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-warn">Con cuidado</span>
+      <div class="action">No dar precio. Usar la tasación para prepararlo emocionalmente para la inspección. «Vamos a revisar tu auto con calma y te doy un valor claro.»</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-key">Momento clave</span>
+      <div class="action">Dar precio con calidez y pausa. Explicar cada factor. Darle espacio para procesar sin presionar respuesta inmediata.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Escuchar con empatía. Validar su sentir antes de responder. Anclar en seguridad y simpleza. Nunca debatir — acompañar.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Cierre suave. Reafirmar que tomó la mejor decisión. Comenzar a generar confianza postventa desde este momento.</div>
+    </td>
+  </tr>
+
+  <!-- TIPO 3 -->
+  <tr>
+    <td class="td-tipo">
+      <div class="td-tipo-name">Tipo 3 — El Pragmático Flexible</div>
+      <div class="td-tipo-sub">Media sensibilidad · Acepta la diferencia</div>
+      <div class="prism-row" style="margin-top:4px"><span class="dot" style="background:#EF9F27"></span>&nbsp;<span class="dot" style="background:#1D9E75"></span></div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Presentación ágil. Énfasis en simpleza y velocidad del proceso. No sobreexplicar ni abrumar.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-optional">Opcional</span>
+      <div class="action">Si menciona una cifra, escuchar. Si no la ofrece, no insistir. No abrir un debate que él no inició.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-skip">No hacer</span>
+      <div class="action">No mostrar portal. Sin expectativas infladas, el portal puede crear una comparación que no existía antes.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-warn">Con cuidado</span>
+      <div class="action">Proceso liviano, sin dramatizar. «Revisamos el auto y en unos minutos te doy el valor.» Mantener calma y agilidad.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-key">Momento clave</span>
+      <div class="action">Dar precio en forma directa con breve explicación. No requiere informe extenso — valora la agilidad por sobre el detalle.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-unlikely">Poco probable</span>
+      <div class="action">Si apela, escuchar brevemente y reforzar la conveniencia del proceso. Rara vez hay tensión real en este perfil.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Cierre rápido y fluido. Mantener la energía positiva. Este cliente valora que todo fue simple y sin drama.</div>
+    </td>
+  </tr>
+
+  <!-- TIPO 4 -->
+  <tr>
+    <td class="td-tipo">
+      <div class="td-tipo-name">Tipo 4 — El Desapegado</div>
+      <div class="td-tipo-sub">Baja sensibilidad · Sin expectativa clara</div>
+      <div class="prism-row" style="margin-top:4px"><span class="dot" style="background:#1D9E75"></span>&nbsp;<span class="dot" style="background:#EF9F27"></span></div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Presentación muy breve. Enfoque en que el proceso es fácil y rápido. No abrumar con información innecesaria.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-skip">Omitir</span>
+      <div class="action">No levantar expectativas que no existen. Preguntar puede despertar una sensibilidad que no había y complicar el proceso.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-skip">No hacer</span>
+      <div class="action">No mostrar portal bajo ninguna circunstancia. No necesita referencias de mercado — puede confundirlo o generarle dudas.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Liviano</span>
+      <div class="action">Proceso natural y sin suspenso. «Revisamos el auto y listo.» No generar expectativa ni dramatismo en ningún momento.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-key">Momento clave</span>
+      <div class="action">Dar precio de forma simple y directa. Sin informe extenso. Solo claridad y confianza — en dos oraciones está resuelto.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-unlikely">Muy poco probable</span>
+      <div class="action">Si hay reacción, suele ser leve. Responder con calma y brevedad. Reforzar que el proceso es seguro y ya está casi listo.</div>
+    </td>
+    <td class="cell">
+      <span class="pill pill-do">Hacer</span>
+      <div class="action">Cierre natural y expedito. No requiere esfuerzo adicional. Mantener tono amable hasta el final.</div>
+    </td>
+  </tr>
+
+  </tbody>
+  </table>
+  </div>
+
+  <div class="legend">
+    <div style="font-size:11px;font-weight:600;color:#1A2B4A;width:100%;margin-bottom:6px">Referencia de indicadores</div>
+    <div class="legend-item"><span class="pill pill-do" style="margin:0">Hacer</span> Etapa recomendada, abordar activamente</div>
+    <div class="legend-item"><span class="pill pill-key" style="margin:0">Momento clave</span> Punto crítico de la negociación con este perfil</div>
+    <div class="legend-item"><span class="pill pill-warn" style="margin:0">Con cuidado</span> Hacer, pero de forma acotada y con criterio</div>
+    <div class="legend-item"><span class="pill pill-optional" style="margin:0">Opcional</span> Solo si el cliente lo abre naturalmente</div>
+    <div class="legend-item"><span class="pill pill-skip" style="margin:0">No hacer</span> Evitar o saltar esta etapa</div>
+    <div class="legend-item"><span class="pill pill-unlikely" style="margin:0">Poco probable</span> Etapa que raramente ocurre en este perfil</div>
+    <div class="legend-section">
+      <span style="color:#6B7A8D;font-size:11px">PRISM:</span>
+      <span class="legend-item"><span class="dot" style="background:#E24B4A"></span> Rojo — Directo, orientado a resultados</span>
+      <span class="legend-item"><span class="dot" style="background:#378ADD"></span> Azul — Analítico, basado en datos</span>
+      <span class="legend-item"><span class="dot" style="background:#1D9E75"></span> Verde — Relacional, evita el conflicto</span>
+      <span class="legend-item"><span class="dot" style="background:#EF9F27"></span> Amarillo — Espontáneo, valora la experiencia</span>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 2: CÓMO IDENTIFICAR AL CLIENTE -->
+<div class="tab-panel" id="panel-identificar">
+  <table style="border-collapse:collapse;width:100%;min-width:780px;font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:12px">
+    <thead>
+      <tr>
+        <th style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;width:160px;font-size:11px;font-weight:600;color:#6B7A8D;text-transform:uppercase;letter-spacing:.05em"></th>
+        <th style="background:#E6F1FB;padding:10px 10px;border:1px solid #E8EEF5;text-align:center;font-size:12px;font-weight:700;color:#185FA5">
+          <span style="display:inline-block;background:#1A2B4A;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;margin-bottom:4px">1</span><br>
+          El Informado Exigente
+        </th>
+        <th style="background:#FAEEDA;padding:10px 10px;border:1px solid #E8EEF5;text-align:center;font-size:12px;font-weight:700;color:#854F0B">
+          <span style="display:inline-block;background:#1A2B4A;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;margin-bottom:4px">2</span><br>
+          El Ansioso Silencioso
+        </th>
+        <th style="background:#EAF3DE;padding:10px 10px;border:1px solid #E8EEF5;text-align:center;font-size:12px;font-weight:700;color:#3B6D11">
+          <span style="display:inline-block;background:#1A2B4A;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;margin-bottom:4px">3</span><br>
+          El Pragmático Flexible
+        </th>
+        <th style="background:#F4E8FB;padding:10px 10px;border:1px solid #E8EEF5;text-align:center;font-size:12px;font-weight:700;color:#4A2070">
+          <span style="display:inline-block;background:#1A2B4A;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:10px;margin-bottom:4px">4</span><br>
+          El Desapegado
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Cómo llega</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Con el celular en mano, ya vio precios en portal. Menciona marcas, versiones y valores específicos desde el inicio.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Llega tranquilo pero observador. No dice mucho, pero lo procesa todo.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Llega con actitud relajada. Suele tener claro el auto que quiere, el VPP es un trámite más.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Llega enfocado en el auto nuevo. El tema de su vehículo actual casi no lo menciona.</td>
+      </tr>
+
+      <tr style="background:#FAFCFF">
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Qué dice</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">«Vi en Chileautos que los están vendiendo a $X» · «¿Cuánto me dan por el mío?» desde el minuto uno.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Poco. Responde con monosílabos o frases cortas cuando se le pregunta por su auto actual.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">«Me imagino que no me van a dar mucho, pero igual» · «Lo que sea, igual lo quiero cambiar».</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">«Sí, tengo un auto, pero lo que importa es el nuevo» · «Lo que me den está bien».</td>
+      </tr>
+
+      <tr>
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Qué piensa pero no dice</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5;font-style:italic">«Si no me ofrecen un precio justo, me voy a otro lado.»</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5;font-style:italic">«Espero que me ofrezcan algo razonable, pero no sé cómo pedirlo.»</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5;font-style:italic">«No quiero complicaciones, si el proceso es simple lo hago igual.»</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5;font-style:italic">«No tengo idea cuánto vale y tampoco me quita el sueño.»</td>
+      </tr>
+
+      <tr style="background:#FAFCFF">
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Lenguaje corporal</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Directo, mantiene contacto visual, pregunta sin filtro. Puede interrumpir.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Cruza los brazos, respuestas cortas, sonríe poco. Observa más de lo que habla.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Relajado, abierto, conversa fácil. No muestra tensión en ningún momento.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Distraído con el auto nuevo. Responde sobre el VPP casi sin mirar.</td>
+      </tr>
+
+      <tr>
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Señal de alerta</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">
+          <span style="display:inline-block;background:#FCEBEB;color:#A32D2D;font-size:10px;font-weight:700;border-radius:3px;padding:2px 6px;margin-bottom:4px">Alerta</span><br>
+          Si siente que lo están evadiendo o no le responden directo, escala rápido.
+        </td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">
+          <span style="display:inline-block;background:#FCEBEB;color:#A32D2D;font-size:10px;font-weight:700;border-radius:3px;padding:2px 6px;margin-bottom:4px">Alerta</span><br>
+          Si no se trabaja bien, se va sin decir por qué. Es el perfil que más se pierde en silencio.
+        </td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">
+          <span style="display:inline-block;background:#FAEEDA;color:#633806;font-size:10px;font-weight:700;border-radius:3px;padding:2px 6px;margin-bottom:4px">Cuidado</span><br>
+          Si el proceso se complica o alarga, pierde el interés. Valora la agilidad por sobre todo.
+        </td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">
+          <span style="display:inline-block;background:#FAEEDA;color:#633806;font-size:10px;font-weight:700;border-radius:3px;padding:2px 6px;margin-bottom:4px">Cuidado</span><br>
+          Si se le generan expectativas que no tenía, puede volverse Tipo 2 o Tipo 1 de golpe.
+        </td>
+      </tr>
+
+      <tr style="background:#FAFCFF">
+        <td style="background:#F4F7FB;padding:10px 12px;border:1px solid #E8EEF5;font-weight:700;font-size:11px;color:#1A2B4A">Cómo ganarte su confianza</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Con datos, fundamentos y firmeza. No le des vueltas — respóndele directo aunque la respuesta no sea la que quiere.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Con calidez, paciencia y transparencia en cada paso. Necesita sentir que está en buenas manos antes de hablar de precio.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Con un proceso ágil y sin drama. Que sienta que todo fluye y que no tiene que pelear por nada.</td>
+        <td style="padding:9px 10px;border:1px solid #E8EEF5;color:#3A4456;line-height:1.5">Con simplicidad total. Menos pasos, menos explicaciones, más acción.</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); b.classList.add('inactive'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.remove('inactive');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+
+</body>
+</html>
